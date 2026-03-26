@@ -132,12 +132,40 @@ curl http://localhost:8000/product?status=created&fields=id,name
 
 ## Sample Data
 
-The API includes two sample products:
+The API includes **6 sample products** following the TMF637 Product Inventory Management API v5.0.0 standard:
 
-1. **g265-tf85** - Product Specification instance
-2. **g265-tf86** - Product Offering instance
+### Available Products
 
-Both products are based on the TM Forum specification examples.
+1. **g265-tf85** - Product Specification instance (VoIP Basic) - status: `created`
+2. **g265-tf86** - Product Offering instance (VoIP Basic) - status: `created`
+3. **9ffg-ze56-ed51** - Bundle Plan - status: `suspended`
+4. **7412** - Premium Internet Service - status: `suspended`
+5. **prod-001** - Mobile Data Plan Premium - status: `active`
+6. **prod-002** - Fiber Internet 1Gbps - status: `active`
+
+### TM Forum Standard Compliance
+
+All sample data follows TMF637 specification with:
+
+✅ **Correct attribute naming and structure** per TMF637 specification
+✅ **Proper use of @type, @referredType fields** for type identification
+✅ **Standard reference objects:**
+- ProductOfferingRef
+- ProductSpecificationRef
+- ServiceRef
+- PlaceRef
+- PartyRef
+
+✅ **Correct ProductCharacteristic types:**
+- BooleanCharacteristic
+- StringCharacteristic
+- ObjectCharacteristic
+
+✅ **Proper ProductPrice structure** with taxIncludedAmount and taxRate
+✅ **ProductTerm** with duration and validFor periods
+✅ **RelatedParty** with role-based associations
+
+The sample data matches the exact format shown in the TM Forum documentation examples and supports all GET operations defined in the API (filtering by status, name, field selection, pagination).
 
 ## Project Structure
 
