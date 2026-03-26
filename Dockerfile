@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY main.py .
+COPY main_mcp.py .
 COPY sample_data.py .
 COPY models.py .
 
@@ -21,5 +21,5 @@ EXPOSE 8080
 # Set environment variable for port
 ENV PORT=8080
 
-# Run the application
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
+# Run the MCP server with SSE transport
+CMD python main_mcp.py --host 0.0.0.0 --port ${PORT} --path /mcp --transport sse
