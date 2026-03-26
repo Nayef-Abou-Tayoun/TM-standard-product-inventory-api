@@ -5,7 +5,13 @@ from sample_data import SAMPLE_PRODUCTS
 app = FastAPI(
     title="Product Inventory API",
     description="TM Forum Product Inventory Management API - GET Operations Only",
-    version="5.0.0"
+    version="5.0.0",
+    servers=[
+        {
+            "url": "https://tm-product-inventory.27jid12fsm9n.us-south.codeengine.appdomain.cloud",
+            "description": "Production server"
+        }
+    ]
 )
 
 
