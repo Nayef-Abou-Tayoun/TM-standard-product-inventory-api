@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "product-inventory": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "env": {},
+      "description": "TM Forum Product Inventory API - Query products following TMF637 specification",
+      "metadata": {
+        "name": "Product Inventory API",
+        "version": "5.0.0",
+        "category": "Product Data",
+        "provider": "TM Forum TMF637",
+        "authentication": "none",
+        "capabilities": [
+          "Get product by ID",
+          "List and filter products",
+          "Search products by customer",
+          "Field selection support",
+          "Status filtering (active, created, suspended)",
+          "Pagination support"
+        ],
+        "sampleProducts": [
+          "g265-tf85 - VoIP Basic (created)",
+          "g265-tf86 - VoIP Basic (created)",
+          "9ffg-ze56-ed51 - Bundle Plan (suspended)",
+          "7412 - Premium Internet (suspended)",
+          "prod-001 - Mobile Data Plan (active)",
+          "prod-002 - Fiber Internet 1Gbps (active)"
+        ]
+      }
+    }
+  }
+}

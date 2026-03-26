@@ -167,14 +167,65 @@ All sample data follows TMF637 specification with:
 
 The sample data matches the exact format shown in the TM Forum documentation examples and supports all GET operations defined in the API (filtering by status, name, field selection, pagination).
 
+## MCP Server (Model Context Protocol)
+
+This repository includes an **MCP server** implementation that allows AI agents to interact with the Product Inventory API through the Model Context Protocol.
+
+### Running the MCP Server
+
+```bash
+# Install dependencies including MCP SDK
+pip install -r requirements.txt
+
+# Run the MCP server
+python mcp_server.py
+```
+
+### MCP Tools Available
+
+The MCP server provides three tools:
+
+1. **get_product_by_id** - Retrieve a product by its unique identifier
+   - Parameters: `product_id` (required), `fields` (optional)
+   - Example: Get product "g265-tf85" with all details
+
+2. **list_products** - List and filter products
+   - Parameters: `status`, `name`, `fields`, `limit`, `offset` (all optional)
+   - Example: List all active products
+
+3. **get_products_by_customer** - Find products by customer name
+   - Parameters: `customer_name` (required)
+   - Example: Find all products for customer "Jean"
+
+### Using with Context Forge
+
+To use this MCP server with IBM Context Forge:
+
+1. **Copy the repository** to your Context Forge MCP servers directory
+2. **Add to Context Forge configuration** using `mcp-config.json`
+3. **Or import via OpenAPI**: Use the OpenAPI spec at:
+   ```
+   https://tm-product-inventory.27jid12fsm9n.us-south.codeengine.appdomain.cloud/openapi.json
+   ```
+
+### MCP Configuration
+
+The `mcp-config.json` file contains the server configuration:
+- Server name: `product-inventory`
+- Command: `python mcp_server.py`
+- Category: Product Data
+- Authentication: None (open access)
+
 ## Project Structure
 
 ```
 .
 ├── main.py              # FastAPI application with GET endpoints
-├── sample_data.py       # Sample product data
-├── models.py            # Pydantic models (optional, for validation)
-├── requirements.txt     # Python dependencies
+├── mcp_server.py        # MCP server implementation
+├── mcp-config.json      # MCP server configuration
+├── sample_data.py       # Sample product data (TMF637 compliant)
+├── models.py            # Pydantic models for validation
+├── requirements.txt     # Python dependencies (FastAPI + MCP)
 └── README.md           # This file
 ```
 
