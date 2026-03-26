@@ -118,24 +118,62 @@ def list_products(
 async def sse_endpoint(request: Request):
     """
     Server-Sent Events endpoint for MCP protocol
-    Provides real-time connection for Context Forge
+    Implements MCP over SSE transport for Context Forge integration
     """
     async def event_generator():
-        # Send initial connection message
-        yield f"data: {json.dumps({'type': 'connected', 'server': 'product-inventory', 'version': '5.0.0'})}\n\n"
-        
-        # Keep connection alive with heartbeat
         try:
+            # Send MCP initialization response
+            init_response = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {
+                            "listChanged": False
+                        }
+                    },
+                    "serverInfo": {
+                        "name": "product-inventory",
+                        "version": "5.0.0"
+                    }
+                }
+            }
+            yield f"data: {json.dumps(init_response)}\n\n"
+            
+            # Send tools list
+            tools_response = {
+                "jsonrpc": "2.0",
+                "method": "notifications/tools/list_changed",
+                "params": {}
+            }
+            yield f"data: {json.dumps(tools_response)}\n\n"
+            
+            # Keep connection alive with ping
             while True:
-                # Check if client disconnected
                 if await request.is_disconnected():
                     break
                 
-                # Send heartbeat every 30 seconds
-                yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': asyncio.get_event_loop().time()})}\n\n"
-                await asyncio.sleep(30)
+                # Send ping every 15 seconds
+                ping = {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/ping",
+                    "params": {}
+                }
+                yield f"data: {json.dumps(ping)}\n\n"
+                await asyncio.sleep(15)
+                
         except asyncio.CancelledError:
             pass
+        except Exception as e:
+            error_msg = {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": str(e)
+                }
+            }
+            yield f"data: {json.dumps(error_msg)}\n\n"
     
     return StreamingResponse(
         event_generator(),
@@ -143,7 +181,8 @@ async def sse_endpoint(request: Request):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*"
         }
     )
 
