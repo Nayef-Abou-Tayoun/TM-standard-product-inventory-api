@@ -187,6 +187,123 @@ async def sse_endpoint(request: Request):
     )
 
 
+@app.post("/sse")
+async def sse_post_endpoint(request: Request):
+    """
+    Handle MCP protocol messages via POST
+    Context Forge sends initialization and tool requests here
+    """
+    try:
+        body = await request.json()
+        
+        # Handle initialize request
+        if body.get("method") == "initialize":
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get("id"),
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "product-inventory",
+                        "version": "5.0.0"
+                    }
+                }
+            }
+        
+        # Handle tools/list request
+        elif body.get("method") == "tools/list":
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get("id"),
+                "result": {
+                    "tools": [
+                        {
+                            "name": "get_product_by_id",
+                            "description": "Retrieve a product by its ID",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "product_id": {"type": "string"},
+                                    "fields": {"type": "string"}
+                                },
+                                "required": ["product_id"]
+                            }
+                        },
+                        {
+                            "name": "list_products",
+                            "description": "List products with filtering",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "name": {"type": "string"},
+                                    "limit": {"type": "integer"}
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        
+        # Handle tools/call request
+        elif body.get("method") == "tools/call":
+            tool_name = body.get("params", {}).get("name")
+            arguments = body.get("params", {}).get("arguments", {})
+            
+            if tool_name == "get_product_by_id":
+                product_id = arguments.get("product_id")
+                if product_id in SAMPLE_PRODUCTS:
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": body.get("id"),
+                        "result": {
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": json.dumps(SAMPLE_PRODUCTS[product_id], indent=2)
+                                }
+                            ]
+                        }
+                    }
+            elif tool_name == "list_products":
+                products = list(SAMPLE_PRODUCTS.values())
+                status = arguments.get("status")
+                if status:
+                    products = [p for p in products if p.get("status") == status]
+                return {
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": json.dumps(products, indent=2)
+                            }
+                        ]
+                    }
+                }
+        
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "error": {
+                "code": -32601,
+                "message": "Method not found"
+            }
+        }
+    except Exception as e:
+        return {
+            "jsonrpc": "2.0",
+            "error": {
+                "code": -32603,
+                "message": str(e)
+            }
+        }
+
+
 @app.get("/mcp/tools")
 async def list_mcp_tools():
     """
