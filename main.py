@@ -1,5 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from typing import Optional, List
+import json
+import asyncio
 from sample_data import SAMPLE_PRODUCTS
 
 app = FastAPI(
@@ -109,6 +112,113 @@ def list_products(
         return filtered_products
     
     return products
+
+
+@app.get("/sse")
+async def sse_endpoint(request: Request):
+    """
+    Server-Sent Events endpoint for MCP protocol
+    Provides real-time connection for Context Forge
+    """
+    async def event_generator():
+        # Send initial connection message
+        yield f"data: {json.dumps({'type': 'connected', 'server': 'product-inventory', 'version': '5.0.0'})}\n\n"
+        
+        # Keep connection alive with heartbeat
+        try:
+            while True:
+                # Check if client disconnected
+                if await request.is_disconnected():
+                    break
+                
+                # Send heartbeat every 30 seconds
+                yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': asyncio.get_event_loop().time()})}\n\n"
+                await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            pass
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@app.get("/mcp/tools")
+async def list_mcp_tools():
+    """
+    List available MCP tools for Context Forge
+    """
+    return {
+        "tools": [
+            {
+                "name": "get_product_by_id",
+                "description": "Retrieve a product by its ID. Returns complete product details including characteristics, pricing, terms, and related parties.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "product_id": {
+                            "type": "string",
+                            "description": "The unique identifier of the product (e.g., 'g265-tf85', 'prod-001')"
+                        },
+                        "fields": {
+                            "type": "string",
+                            "description": "Optional comma-separated list of fields to include in response"
+                        }
+                    },
+                    "required": ["product_id"]
+                }
+            },
+            {
+                "name": "list_products",
+                "description": "List or find product objects with optional filtering. Supports filtering by status, name, and pagination.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "description": "Filter by product status",
+                            "enum": ["active", "created", "suspended"]
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Filter by product name (partial match)"
+                        },
+                        "fields": {
+                            "type": "string",
+                            "description": "Comma-separated list of fields to include"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of results to return"
+                        },
+                        "offset": {
+                            "type": "integer",
+                            "description": "Number of results to skip for pagination"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "get_products_by_customer",
+                "description": "Find all products associated with a specific customer name.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "customer_name": {
+                            "type": "string",
+                            "description": "Customer name to search for"
+                        }
+                    },
+                    "required": ["customer_name"]
+                }
+            }
+        ]
+    }
 
 
 if __name__ == "__main__":
